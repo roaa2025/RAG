@@ -55,6 +55,7 @@ class DocumentParser:
         
         # Initialize skill extractor if enabled
         self.skill_extractor = None
+
         if self.config.get("skill_extraction", {}).get("enabled", False):
             self.logger.info("Initializing skill extractor")
             self.skill_extractor = SkillExtractor(
@@ -67,6 +68,18 @@ class DocumentParser:
             self.logger.info("Initializing embedding service")
             self.embedding_service = EmbeddingService()
         
+        # Initialize data structurer
+        self.data_structurer = self._initialize_data_structurer()
+        
+        self.logger.info("DocumentParser initialization complete")
+    
+    def _initialize_data_structurer(self):
+        """
+        Initialize the appropriate data structurer based on configuration.
+        
+        Returns:
+            Either AdvancedDataStructurer or DataStructurer instance
+        """
         # Use advanced data structurer if enabled in config
         use_advanced_chunking = self.config.get("structuring", {}).get("use_advanced_chunking", False)
         
@@ -79,16 +92,14 @@ class DocumentParser:
         
         if use_advanced_chunking:
             self.logger.info("Using advanced chunking strategy")
-            self.data_structurer = AdvancedDataStructurer(
+            return AdvancedDataStructurer(
                 structure_config=self.config.get("structuring", {})
             )
         else:
             self.logger.info("Using basic document structuring")
-            self.data_structurer = DataStructurer(
+            return DataStructurer(
                 structure_config=self.config.get("structuring", {})
             )
-        
-        self.logger.info("DocumentParser initialization complete")
     
     def parse_document(self, file_path: Union[str, List[str]], output_dir: Optional[str] = None) -> Dict[str, Any]:
         """

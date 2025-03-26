@@ -37,10 +37,10 @@ def main():
             "method": "openai",
             "model": "gpt-4o",  # Explicitly use GPT-4o model
             "min_confidence": 0.5,
-            "store_rejected": True
+            "store_rejected": True, 
         },
         "structuring": {
-            "use_advanced_chunking": True  # Enable advanced chunking by default
+            "use_advanced_chunking": True , # Enable advanced chunking by default
         }
     }
     

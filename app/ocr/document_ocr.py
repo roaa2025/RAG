@@ -4,7 +4,7 @@ from pathlib import Path
 from docling.document_converter import DocumentConverter
 from langchain.schema.document import Document
 import os
-from app.utils.document_utils import convert_webp_to_jpg
+from utils.document_utils import convert_webp_to_jpg
 
 class DocumentOCR:
     """
@@ -48,6 +48,7 @@ class DocumentOCR:
             processed_count = 0
             converted_files = []
             
+            # TODO: parallel processing of files
             for path in file_path:
                 try:
                     # Check if file exists
