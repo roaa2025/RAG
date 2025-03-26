@@ -1,0 +1,65 @@
+{
+    "ocr": {
+        "enabled": true,
+        "use_tesseract": true,
+        "use_layout_analysis": true
+    },
+    "preprocessing": {
+        "enabled": true,
+        "normalize_whitespace": true,
+        "remove_urls": false,
+        "remove_emails": false,
+        "remove_line_breaks": false
+    },
+    "skill_extraction": {
+        "enabled": true,
+        "method": "openai",
+        "model": "gpt-4o",
+        "min_confidence": 0.6,
+        "store_rejected": true
+    },
+    "structuring": {
+        "use_advanced_chunking": true,
+        "chunking": {
+            "hierarchical": {
+                "enabled": true,
+                "min_section_length": 100,
+                "headings_regexp": "^#+\\s+.+|^.+\\n[=\\-]+$"
+            },
+            "semantic": {
+                "enabled": true,
+                "similarity_threshold": 0.75,
+                "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+                "min_sentences_per_chunk": 3,
+                "max_sentences_to_consider": 20
+            },
+            "fixed_size": {
+                "enabled": true,
+                "max_tokens": 1000,
+                "overlap_tokens": 100
+            },
+            "metadata": {
+                "preserve_headers": true,
+                "include_position": true,
+                "include_chunk_type": true,
+                "track_pipeline": true,
+                "show_all_layers": true
+            }
+        }
+    },
+    "embeddings": {
+        "enabled": true,
+        "model": "text-embedding-3-small",
+        "dimensions": 1536,
+        "batch_size": 100,
+        "include_metadata": true
+    },
+    "vector_store": {
+        "enabled": true,
+        "type": "qdrant",
+        "collection": "document_embeddings",
+        "host": "localhost",
+        "port": 6333,
+        "distance": "Cosine"
+    }
+}

@@ -1,0 +1,19 @@
+# Qdrant configuration file
+
+storage:
+  # Storage persistence path
+  storage_path: ./qdrant_storage
+
+  # Use on-disk storage, instead of in-memory
+  on_disk_payload: true
+  
+  # Enable optimizers in storage
+  optimizers_enable: true
+
+service:
+  # Port to listen on
+  http_port: 6333
+  # Address to bind the service to
+  host: 127.0.0.1
+
+telemetry_disabled: true 

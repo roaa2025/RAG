@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Qdrant vector database
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"  # REST API
+      - "6334:6334"  # GRPC API
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Python application
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+    networks:
+      - app_network
+    volumes:
+      - ./:/app
+    command: >
+      bash -c "python local_qdrant_example.py"
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  qdrant_storage: 

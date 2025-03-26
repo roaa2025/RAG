@@ -1,0 +1,37 @@
+# Docker related
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Git related
+.git
+.gitignore
+
+# Python related
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+venv/
+ENV/
+.env
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Qdrant data
+qdrant_storage/
+qdrant_binary/
+
+# IDE and editor folders
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db 
