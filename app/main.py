@@ -1,4 +1,4 @@
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, cast
 import logging
 import os
 import json
@@ -141,11 +141,12 @@ class DocumentParser:
         
         # Check if we're using the advanced structurer
         if isinstance(self.data_structurer, AdvancedDataStructurer):
-            self.logger.info(f"Generated {structured_documents.get('total_chunk_count', 0)} chunks across {len(processed_documents)} documents")
+            structured_docs = cast(Dict[str, Any], structured_documents)
+            self.logger.info(f"Generated {structured_docs.get('total_chunk_count', 0)} chunks across {len(processed_documents)} documents")
             result = {
                 "input_files": valid_paths,
                 "document_count": len(valid_paths),
-                **structured_documents  # Include all evaluation data
+                **structured_docs  # Include all evaluation data
             }
         else:
             self.logger.info(f"Structured {len(structured_documents)} document chunks")
@@ -163,16 +164,16 @@ class DocumentParser:
             # Handle both advanced and basic structuring formats
             if isinstance(self.data_structurer, AdvancedDataStructurer):
                 # For advanced structuring, we need to extract skills from both documents and chunks
-                docs_to_process = []
+                docs_to_process: List[Dict[str, Any]] = []
                 
                 # First, add the original documents 
-                if "documents" in structured_documents:
-                    docs_to_process.extend(structured_documents["documents"])
+                if "documents" in structured_docs:
+                    docs_to_process.extend(cast(List[Dict[str, Any]], structured_docs["documents"]))
                 
                 # Then add individual chunks which might contain skills
-                if "chunks" in structured_documents:
+                if "chunks" in structured_docs:
                     # Convert chunks to the format expected by process_skill_data
-                    for chunk in structured_documents["chunks"]:
+                    for chunk in cast(List[Dict[str, Any]], structured_docs["chunks"]):
                         if isinstance(chunk, dict):
                             chunk_doc = {
                                 "content_type": chunk.get("content_type", "text"),
@@ -182,7 +183,7 @@ class DocumentParser:
                             docs_to_process.append(chunk_doc)
             else:
                 # For basic structuring, use the processed_documents directly
-                docs_to_process = structured_documents
+                docs_to_process = cast(List[Dict[str, Any]], structured_documents)
             
             # Process skill data from all documents
             include_rejected = self.config.get("skill_extraction", {}).get("store_rejected", True)
@@ -288,7 +289,7 @@ class DocumentParser:
         for doc_path in document_paths:
             try:
                 # Process document and get chunks
-                doc_result = self.process_single_document(doc_path)
+                doc_result = self.parse_document(doc_path)
                 
                 if doc_result:
                     # Add document to results
@@ -484,6 +485,14 @@ if __name__ == "__main__":
     parser.add_argument("--config", help="Path to custom config file")
     parser.add_argument("--no-qdrant-store", action="store_true", help="Skip storing in Qdrant")
     parser.add_argument("--collection", default="document_embeddings", help="Qdrant collection name")
+    
+    # For debugging purposes, you can uncomment and modify these lines:
+    # import sys
+    # if len(sys.argv) == 1:  # No arguments provided
+    #     sys.argv.extend([
+    #         "path/to/your/document.pdf",  # Replace with your document path
+    #         "--output-dir", "output"
+    #     ])
     
     args = parser.parse_args()
     

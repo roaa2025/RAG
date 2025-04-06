@@ -1,0 +1,11 @@
+This is a test document.
+It contains multiple lines of text.
+We can use this to test the document processing pipeline.
+
+Some key points:
+- Document processing
+- Text extraction
+- OCR capabilities
+- Data structuring
+
+The pipeline should be able to handle this simple text file without any issues. 

@@ -4,7 +4,7 @@ from pathlib import Path
 from docling.document_converter import DocumentConverter
 from langchain.schema.document import Document
 import os
-from utils.document_utils import convert_webp_to_jpg
+from app.utils.document_utils import convert_webp_to_jpg
 
 class DocumentOCR:
     """

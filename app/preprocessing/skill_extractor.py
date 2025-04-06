@@ -248,36 +248,48 @@ class SkillExtractor:
             Dictionary with validated and rejected skills in the required format
         """
         if not self.extraction_config.get("enabled"):
-            return {"text": text, "state": {"validated_skills": [], "rejected_skills": []}}
-        
-        # Use mock implementation if API key not available or method is 'mock'
-        if self.extraction_config.get("method") == "mock" or not self.extraction_config.get("openai_api_key"):
-            self.logger.info("Using mock skill extraction")
-            return self._mock_extract_skills(text)
-        
+            self.logger.warning("Skill extraction is disabled in configuration")
+            return {"validated_skills": [], "rejected_skills": []}
+
+        if not text:
+            self.logger.warning("Empty text provided for skill extraction")
+            return {"validated_skills": [], "rejected_skills": []}
+
+        if not self.extraction_config.get("openai_api_key"):
+            self.logger.error("OpenAI API key is not configured")
+            return {"validated_skills": [], "rejected_skills": []}
+
         try:
-            # Extract skills
+            # First extract potential skills
             extraction_result = self._extract_skills_with_openai(text)
-            extracted_skills = extraction_result.get("extracted_skills", [])
+            if not extraction_result.get("extracted_skills"):
+                self.logger.warning("No skills extracted from text")
+                return {"validated_skills": [], "rejected_skills": []}
+
+            # Then validate the extracted skills
+            validation_result = self._validate_skills_with_openai(text, extraction_result["extracted_skills"])
             
-            if not extracted_skills:
-                self.logger.info("No skills extracted")
-                return {"text": text, "state": {"validated_skills": [], "rejected_skills": []}}
+            # Log the results
+            self.logger.info(f"Extracted {len(extraction_result['extracted_skills'])} potential skills")
+            self.logger.info(f"Validated {len(validation_result['validated_skills'])} skills")
+            self.logger.info(f"Rejected {len(validation_result['rejected_skills'])} skills")
             
-            # Validate and categorize skills
-            validation_result = self._validate_skills_with_openai(text, extracted_skills)
-            
-            # Format result
-            result = {
+            # Return in the expected format
+            return {
                 "text": text,
                 "state": validation_result
             }
-            
-            return result
-            
+
         except Exception as e:
-            self.logger.error(f"Error extracting skills: {str(e)}")
-            return {"text": text, "state": {"validated_skills": [], "rejected_skills": [], "error": str(e)}}
+            self.logger.error(f"Error in skill extraction process: {str(e)}")
+            return {
+                "text": text,
+                "state": {
+                    "validated_skills": [],
+                    "rejected_skills": [],
+                    "error": str(e)
+                }
+            }
     
     def process_documents(self, documents: List[Document]) -> List[Document]:
         """
@@ -293,11 +305,20 @@ class SkillExtractor:
             self.logger.info("Skill extraction disabled, returning original documents")
             return documents
         
+        if not self.extraction_config.get("openai_api_key"):
+            self.logger.error("OpenAI API key is not configured")
+            return documents
+        
         self.logger.info(f"Processing {len(documents)} documents for skill extraction")
         processed_documents = []
         
         for doc in documents:
             try:
+                if not doc.page_content:
+                    self.logger.warning("Document has no content, skipping skill extraction")
+                    processed_documents.append(doc)
+                    continue
+                
                 # Extract skills from document content
                 extraction_result = self.extract_skills(doc.page_content)
                 
@@ -305,7 +326,19 @@ class SkillExtractor:
                 metadata = doc.metadata.copy() if doc.metadata else {}
                 
                 # Add skills to metadata
-                metadata["skills"] = extraction_result.get("state", {})
+                if "state" in extraction_result:
+                    metadata["skills"] = extraction_result["state"]
+                else:
+                    metadata["skills"] = {
+                        "validated_skills": extraction_result.get("validated_skills", []),
+                        "rejected_skills": extraction_result.get("rejected_skills", [])
+                    }
+                
+                # Log the results for this document
+                skills_state = metadata["skills"]
+                self.logger.info(f"Document {doc.metadata.get('source', 'unknown')}: "
+                               f"Extracted {len(skills_state.get('validated_skills', []))} validated skills, "
+                               f"{len(skills_state.get('rejected_skills', []))} rejected skills")
                 
                 # Create new document with updated metadata
                 processed_doc = Document(
